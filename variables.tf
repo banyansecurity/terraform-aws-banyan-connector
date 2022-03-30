@@ -4,13 +4,20 @@ variable "vpc_id" {
 }
 
 variable "subnet_id" {
-  type        = list(string)
+  type        = string
   description = "ID of the subnet where the Connector instance should be created"
 }
 
 variable "package_version" {
   type        = string
-  description = "Version of connector to install (e.g. `1.3.0`)"
+  description = "Override to use a specific version of connector (e.g. `1.3.0`)"
+  default     = null
+}
+
+variable "management_cidrs" {
+  type        = list(string)
+  description = "CIDR blocks to allow SSH connections from"
+  default     = ["0.0.0.0/0"]
 }
 
 variable "ssh_key_name" {
@@ -22,7 +29,7 @@ variable "ssh_key_name" {
 variable "instance_type" {
   type        = string
   description = "EC2 instance type to use when creating Connector instance"
-  default     = "t3.micro"
+  default     = "t3.small"
 }
 
 variable "ami_id" {
@@ -43,12 +50,6 @@ variable "custom_user_data" {
   default     = []
 }
 
-variable "iam_instance_profile" {
-  type        = string
-  description = "The name attribute of the IAM instance profile to associate with launched instances."
-  default     = null
-}
-
 variable "tags" {
   type        = map(any)
   description = "Add tags to each resource"
@@ -59,6 +60,12 @@ variable "security_group_tags" {
   type        = map
   description = "Additional tags to the security_group"
   default     = null
+}
+
+variable "name_prefix" {
+  type        = string
+  description = "String to be added in front of all AWS object names"
+  default     = "banyan"
 }
 
 variable "http_endpoint_imds_v2" {
