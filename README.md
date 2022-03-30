@@ -16,8 +16,8 @@ module "aws_connector" {
   vpc_id                 = "vpc-0e73afd7c24062f0a"
   subnet_id              = "subnet-00e393f22c3f09e16"
   ssh_key_name           = "my-ssh-key"
-  api_key_secret         = "abc123..."
   connector_name         = "my-banyan-connector"
+  api_key_secret         = "abc123..."
 }
 ```
 
