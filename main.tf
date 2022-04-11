@@ -1,6 +1,7 @@
 locals {
   tags = merge(var.tags, {
     Provider = "Banyan"
+    Name = "${var.name_prefix}-connector"
   })
 }
 
