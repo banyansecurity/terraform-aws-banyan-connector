@@ -20,7 +20,7 @@ variable "management_cidrs" {
   default     = ["0.0.0.0/0"]
 }
 
-variable "ssh_key_name" {
+variable "ssh_key_id" {
   type        = string
   description = "Name of an SSH key stored in AWS to allow management access"
   default     = ""
@@ -86,13 +86,13 @@ variable "http_hop_limit_imds_v2" {
   default     = 1
 }
 
-variable "command_center_url" {
+variable "banyan_host" {
   type        = string
   description = "URL of the Banyan Command Center"
-  default     = "https://team.console.banyanops.com"
+  default     = "https://team.console.banyanops.com/"
 }
 
-variable "api_key_secret" {
+variable "banyan_api_key" {
   type        = string
   description = "API key generated from the Banyan Command Center console"
 }
@@ -102,3 +102,6 @@ variable "connector_name" {
   description = "Name to use when registering this Connector with the Command Center console"
 }
 
+variable "region" {
+  type = string
+}

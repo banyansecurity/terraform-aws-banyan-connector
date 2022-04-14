@@ -1,5 +1,5 @@
 output "sg" {
-  value = aws_security_group.sg.id
+  value = aws_security_group.connector_sg.id
 }
 
 output "connector_name" {
