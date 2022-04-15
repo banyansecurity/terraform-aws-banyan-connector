@@ -7,17 +7,23 @@ This module creates an EC2 instance for the Banyan Connector. The EC2 instance l
 ## Usage
 
 ```hcl
-provider "aws" {
+locals {
   region = "us-east-1"
+}
+
+provider "aws" {
+  region = local.region
 }
 
 module "aws_connector" {
   source                 = "banyansecurity/banyan-connector/aws"
+  region                 = local.region  
   vpc_id                 = "vpc-0e73afd7c24062f0a"
   subnet_id              = "subnet-00e393f22c3f09e16"
   ssh_key_name           = "my-ssh-key"
   connector_name         = "my-banyan-connector"
-  api_key_secret         = "abc123..."
+  banyan_host            = "https://team.console.banyanops.com"
+  banyan_api_key         = "abc123..."
 }
 ```
 
@@ -26,22 +32,22 @@ module "aws_connector" {
 
 The connector is deployed in a private subnet, so the default value for `management_cidr` uses SSH open to the world on port 2222. You can use the CIDR of your VPC, or a bastion host, instead.
 
-It's probably also a good idea to leave the `api_key_secret` out of your code and pass it as a variable instead, so you don't accidentally commit your Banyan API token to your version control system:
+It's probably also a good idea to leave the `banyan_api_key` out of your code and pass it as a variable instead, so you don't accidentally commit your Banyan API token to your version control system:
 
 ```hcl
-variable "api_key_secret" {
+variable "banyan_api_key" {
   type = string
 }
 
 module "aws_connector" {
   source                 = "banyansecurity/banyan-connector/aws"
-  api_key_secret         = var.api_key_secret
+  banyan_api_key         = var.banyan_api_key
   ...
 }
 ```
 
 ```bash
-export TF_VAR_api_key_secret="abc123..."
+export TF_VAR_banyan_api_keyt="abc123..."
 terraform plan
 ```
 
@@ -51,8 +57,8 @@ terraform plan
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_ami_id"></a> [ami\_id](#input\_ami\_id) | ID of a custom AMI to use when creating a Connector instance (leave blank to use default) | `string` | `""` | no |
-| <a name="input_api_key_secret"></a> [api\_key\_secret](#input\_api\_key\_secret) | API key generated from the Banyan Command Center console | `string` | n/a | yes |
-| <a name="input_command_center_url"></a> [command\_center\_url](#input\_command\_center\_url) | URL of the Banyan Command Center | `string` | `"https://team.console.banyanops.com"` | no |
+| <a name="input_banyan_api_key"></a> [api\_key\_secret](#input\_api\_key\_secret) | API key generated from the Banyan Command Center console | `string` | n/a | yes |
+| <a name="input_banyan_host"></a> [command\_center\_url](#input\_command\_center\_url) | URL of the Banyan Command Center | `string` | `"https://team.console.banyanops.com"` | no |
 | <a name="input_connector_name"></a> [connector\_name](#input\_connector\_name) | Name to use when registering this Connector with the Command Center console | `string` | n/a | yes |
 | <a name="input_custom_user_data"></a> [custom\_user\_data](#input\_custom\_user\_data) | Custom commands to append to the launch configuration initialization script. | `list(string)` | `[]` | no |
 | <a name="input_default_ami_name"></a> [default\_ami\_name](#input\_default\_ami\_name) | If no AMI ID is supplied, use the most recent AMI from this project | `string` | `"amzn2-ami-hvm-2.0.*-x86_64-ebs"` | no |
@@ -71,12 +77,15 @@ terraform plan
 
 ## Outputs
 
-None
+| Name | Description |
+|------|-------------|
+| connector\_name | Name of the connector (example: `my-conn`) |
+| sg | The ID of the security group attached to the connector instance, which can be added as an inbound rule on other backend groups (example: `sg-1234abcd`) |
 
 
 ## Authors
 
-Module created and managed by [Tarun Desikan](https://github.com/tdesikan).
+Module created and managed by [Banyan](https://github.com/banyansecurity).
 
 
 ## License
