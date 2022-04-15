@@ -1,3 +1,8 @@
+variable "region" {
+  type        = string
+  description = "Region in AWS in which your VPC resides"
+}
+
 variable "vpc_id" {
   type        = string
   description = "ID of the VPC in which to create the Connector"
@@ -20,7 +25,7 @@ variable "management_cidrs" {
   default     = ["0.0.0.0/0"]
 }
 
-variable "ssh_key_id" {
+variable "ssh_key_name" {
   type        = string
   description = "Name of an SSH key stored in AWS to allow management access"
   default     = ""
@@ -94,14 +99,10 @@ variable "banyan_host" {
 
 variable "banyan_api_key" {
   type        = string
-  description = "API key generated from the Banyan Command Center console"
+  description = "API Key or Refresh Token generated from the Banyan Command Center console"
 }
 
 variable "connector_name" {
   type        = string
   description = "Name to use when registering this Connector with the Command Center console"
-}
-
-variable "region" {
-  type = string
 }
