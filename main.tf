@@ -2,7 +2,7 @@ terraform {
   required_providers {
     banyan = {
       source  = "banyansecurity/banyan"
-      version = "0.6.1"
+      version = "0.6.2"
     }
     aws = {
       source  = "hashicorp/aws"
@@ -17,6 +17,7 @@ terraform {
 
 provider "aws" {
   region = var.region
+  profile = var.profile
 }
 
 provider "banyan" {

@@ -3,6 +3,12 @@ variable "region" {
   description = "Region in AWS in which your VPC resides"
 }
 
+variable "profile" {
+  type        = string
+  description = "AWS profile with your credentials"
+  default     = "default"
+}
+
 variable "vpc_id" {
   type        = string
   description = "ID of the VPC in which to create the Connector"
