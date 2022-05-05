@@ -81,15 +81,7 @@ resource "aws_security_group" "connector_sg" {
   }
 }
 
-# wait for a connector to be unhealthy before the API objects can be deleted
-resource "time_sleep" "connector_health_check" {
-  depends_on = [banyan_connector.connector_spec]
-
-  destroy_duration = "5m"
-}
-
 resource "aws_instance" "connector_vm" {
-  depends_on = [time_sleep.connector_health_check]
 
   ami             = var.ami_id != "" ? var.ami_id : data.aws_ami.default_ami.id
   instance_type   = var.instance_type
