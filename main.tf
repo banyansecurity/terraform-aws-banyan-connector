@@ -2,7 +2,7 @@ terraform {
   required_providers {
     banyan = {
       source  = "banyansecurity/banyan"
-      version = "0.6.2"
+      version = "0.6.3"
     }
     aws = {
       source  = "hashicorp/aws"
@@ -32,16 +32,20 @@ locals {
   })
 }
 
-data aws_ami "default_ami" {
+data "aws_ami" "ubuntu" {
   most_recent = true
-  owners      = ["amazon"]
+  owners = ["099720109477"] # Canonical
 
   filter {
     name   = "name"
-    values = [var.default_ami_name]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
+  }
+  
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
   }
 }
-
 
 resource "banyan_api_key" "connector_key" {
   name              = var.connector_name
@@ -53,7 +57,6 @@ resource "banyan_connector" "connector_spec" {
   name              = var.connector_name
   satellite_api_key_id = banyan_api_key.connector_key.id
 }
-
 
 resource "aws_security_group" "connector_sg" {
   name        = "${var.name_prefix}-connector_sg"
@@ -88,10 +91,33 @@ resource "time_sleep" "connector_health_check" {
   destroy_duration = "5m"
 }
 
+locals {
+  init_script = <<INIT_SCRIPT
+#!/bin/bash
+# use the latest, or set the specific version
+LATEST_VER=$(curl -sI https://www.banyanops.com/netting/connector/latest | awk '/Location:/ {print $2}' | grep -Po '(?<=connector-)\S+(?=.tar.gz)')
+INPUT_VER="${var.package_version}"
+VER="$LATEST_VER" && [[ ! -z "$INPUT_VAR" ]] && VER="$INPUT_VER"
+# create folder for the Tarball
+mkdir -p /opt/banyan-packages
+cd /opt/banyan-packages
+# download and unzip the files
+wget https://www.banyanops.com/netting/connector-$VER.tar.gz
+tar zxf connector-$VER.tar.gz
+cd connector-$VER
+# create the config file
+echo 'command_center_url: ${var.banyan_host}' > connector-config.yaml
+echo 'api_key_secret: ${banyan_api_key.connector_key.secret}' >> connector-config.yaml
+echo 'connector_name: ${var.connector_name}' >> connector-config.yaml
+./setup-connector.sh
+echo 'Port 2222' >> /etc/ssh/sshd_config && /bin/systemctl restart sshd.service
+INIT_SCRIPT
+}
+
 resource "aws_instance" "connector_vm" {
   depends_on = [time_sleep.connector_health_check]
 
-  ami             = var.ami_id != "" ? var.ami_id : data.aws_ami.default_ami.id
+  ami             = data.aws_ami.ubuntu.id
   instance_type   = var.instance_type
   key_name        = var.ssh_key_name
 
@@ -109,29 +135,11 @@ resource "aws_instance" "connector_vm" {
   }
 
   metadata_options {
-    http_endpoint               = var.http_endpoint_imds_v2
-    http_tokens                 = var.http_tokens_imds_v2
-    http_put_response_hop_limit = var.http_hop_limit_imds_v2
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 1
   }
 
-  user_data = join("", concat([
-    "#!/bin/bash -ex\n",
-    # use the latest, or set the specific version
-    "VER=$(curl -sI https://www.banyanops.com/netting/connector/latest | awk '/Location:/ {print $2}' | grep -Po '(?<=connector-)\\S+(?=.tar.gz)')\n",
-    var.package_version != null ? "VER=${var.package_version}\n": "",
-    # create folder for the Tarball
-    "mkdir -p /opt/banyan-packages\n",
-    "cd /opt/banyan-packages\n",
-    # download and unzip the files
-    "wget https://www.banyanops.com/netting/connector-$VER.tar.gz\n",
-    "tar zxf connector-$VER.tar.gz\n",
-    "cd connector-$VER\n",
-    # create the config file
-    "echo 'command_center_url: ${var.banyan_host}' > connector-config.yaml\n",
-    "echo 'api_key_secret: ${banyan_api_key.connector_key.secret}' >> connector-config.yaml\n",
-    "echo 'connector_name: ${var.connector_name}' >> connector-config.yaml\n",
-    "./setup-connector.sh\n",
-    "echo 'Port 2222' >> /etc/ssh/sshd_config && /bin/systemctl restart sshd.service\n",    
-    ], var.custom_user_data))
+  user_data = local.init_script
 }
 
