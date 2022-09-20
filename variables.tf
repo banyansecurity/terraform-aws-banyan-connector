@@ -70,3 +70,9 @@ variable "connector_name" {
   type        = string
   description = "Name to use when registering this Connector with the Command Center console"
 }
+
+variable "member_security_groups" {
+  type    = list(string)
+  description = "Additional security groups which the access tier should be a member of"
+  default = []
+}

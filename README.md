@@ -20,10 +20,10 @@ module "aws_connector" {
   region                 = local.region  
   vpc_id                 = "vpc-0e73afd7c24062f0a"
   subnet_id              = "subnet-00e393f22c3f09e16"
-  ssh_key_name           = "my-ssh-key"
   connector_name         = "my-banyan-connector"
-  banyan_host            = "https://team.console.banyanops.com"
+  banyan_host            = "https://net.banyanops.com/"
   banyan_api_key         = "abc123..."
+  member_security_groups = ""
 }
 ```
 
