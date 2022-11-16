@@ -22,6 +22,18 @@ variable "cluster" {
   default     = null
 }
 
+variable "tunnel_private_domains" {
+  type = list(string)
+  description = "Any internal domains that can only be resolved on your internal network’s private DNS"
+  default     = null
+}
+
+variable "tunnel_cidrs" {
+  type = list(string)
+  description = "Backend CIDR Ranges that correspond to the IP addresses in your private network(s)"
+  default     = null
+}
+
 // AWS specific variables
 variable "vpc_id" {
   type        = string
