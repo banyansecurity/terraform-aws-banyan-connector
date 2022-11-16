@@ -1,7 +1,7 @@
-output "sg" {
-  value = aws_security_group.connector_sg.id
+output "name" {
+  value = var.name
 }
 
-output "connector_name" {
-  value = var.connector_name
+output "sg" {
+  value = aws_security_group.connector_sg.id
 }

@@ -1,34 +1,7 @@
-terraform {
-  required_providers {
-    banyan = {
-      source  = "banyansecurity/banyan"
-      version = "0.6.3"
-    }
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 3.0"
-    }
-    time = {
-      source = "hashicorp/time"
-      version = "0.7.2"
-    }
-  }
-}
-
-provider "aws" {
-  region = var.region
-  profile = var.profile
-}
-
-provider "banyan" {
-  api_token = var.banyan_api_key
-  host      = var.banyan_host
-}
-
 locals {
   tags = merge(var.tags, {
     Provider = "Banyan"
-    Name = "${var.connector_name}"
+    Name = "${var.name}"
   })
 }
 
@@ -47,27 +20,16 @@ data "aws_ami" "ubuntu" {
   }
 }
 
-resource "banyan_api_key" "connector_key" {
-  name              = var.connector_name
-  description       = var.connector_name
-  scope             = "satellite"
-}
-
-resource "banyan_connector" "connector_spec" {
-  name              = var.connector_name
-  satellite_api_key_id = banyan_api_key.connector_key.id
-}
-
 resource "aws_security_group" "connector_sg" {
-  name        = "${var.name_prefix}-connector_sg"
+  name        = "${var.name}-connector_sg"
   description = "Banyan connector runs in the private network, no internet-facing ports needed"
   vpc_id      = var.vpc_id
 
   tags = local.tags
 
   ingress {
-    from_port         = 2222
-    to_port           = 2222
+    from_port         = 22
+    to_port           = 22
     protocol          = "tcp"
     cidr_blocks       = var.management_cidrs
     description       = "Management"
@@ -84,19 +46,12 @@ resource "aws_security_group" "connector_sg" {
   }
 }
 
-# wait for a connector to be unhealthy before the API objects can be deleted
-resource "time_sleep" "connector_health_check" {
-  depends_on = [banyan_connector.connector_spec]
-
-  destroy_duration = "5m"
-}
-
 locals {
   init_script = <<INIT_SCRIPT
 #!/bin/bash
 # use the latest, or set the specific version
 LATEST_VER=$(curl -sI https://www.banyanops.com/netting/connector/latest | awk '/Location:/ {print $2}' | grep -Po '(?<=connector-)\S+(?=.tar.gz)')
-INPUT_VER="${var.package_version}"
+INPUT_VER="${var.connector_version}"
 VER="$LATEST_VER" && [[ ! -z "$INPUT_VAR" ]] && VER="$INPUT_VER"
 # create folder for the Tarball
 mkdir -p /opt/banyan-packages
@@ -107,16 +62,13 @@ tar zxf connector-$VER.tar.gz
 cd connector-$VER
 # create the config file
 echo 'command_center_url: ${var.banyan_host}' > connector-config.yaml
-echo 'api_key_secret: ${banyan_api_key.connector_key.secret}' >> connector-config.yaml
-echo 'connector_name: ${var.connector_name}' >> connector-config.yaml
+echo 'api_key_secret: ${banyan_api_key.connector.secret}' >> connector-config.yaml
+echo 'connector_name: ${var.name}' >> connector-config.yaml
 ./setup-connector.sh
-echo 'Port 2222' >> /etc/ssh/sshd_config && /bin/systemctl restart sshd.service
 INIT_SCRIPT
 }
 
 resource "aws_instance" "connector_vm" {
-  depends_on = [time_sleep.connector_health_check]
-
   ami             = data.aws_ami.ubuntu.id
   instance_type   = var.instance_type
   key_name        = var.ssh_key_name

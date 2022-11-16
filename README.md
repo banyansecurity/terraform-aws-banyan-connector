@@ -1,56 +1,57 @@
 # Banyan AWS Connector Module
 
-Creates an outbound Connector for use with [Banyan Security][banyan-security].
-
 This module creates an EC2 instance for the Banyan Connector. The EC2 instance lives in a private subnet with no ingress from the internet.
 
 ## Usage
 
 ```hcl
-locals {
-  region = "us-east-1"
+provider "banyan" {
+  api_key = var.api_key
 }
 
 provider "aws" {
-  region = local.region
+  region = "us-east-1"
 }
 
 module "aws_connector" {
   source                 = "banyansecurity/banyan-connector/aws"
-  region                 = local.region  
+  
+  name                   = "my-banyan-connector"
   vpc_id                 = "vpc-0e73afd7c24062f0a"
   subnet_id              = "subnet-00e393f22c3f09e16"
-  ssh_key_name           = "my-ssh-key"
-  connector_name         = "my-banyan-connector"
-  banyan_host            = "https://team.console.banyanops.com"
-  banyan_api_key         = "abc123..."
 }
 ```
 
 
 ## Notes
 
-The connector is deployed in a private subnet, so the default value for `management_cidr` uses SSH open to the world on port 2222. You can use the CIDR of your VPC, or a bastion host, instead.
+The connector is deployed in a private subnet, so the default value for `management_cidr` uses SSH open to the world on port 22. You can use the CIDR of your VPC, or a bastion host, instead.
 
-It's probably also a good idea to leave the `banyan_api_key` out of your code and pass it as a variable instead, so you don't accidentally commit your Banyan API token to your version control system:
 
-```hcl
-variable "banyan_api_key" {
-  type = string
-}
+<!-- BEGIN_TF_DOCS -->
+## Requirements
 
-module "aws_connector" {
-  source                 = "banyansecurity/banyan-connector/aws"
-  banyan_api_key         = var.banyan_api_key
-  ...
-}
-```
+| Name | Version |
+|------|---------|
+| <a name="requirement_banyan"></a> [banyan](#requirement\_banyan) | >=0.9.2 |
 
-```bash
-export TF_VAR_banyan_api_key="abc123..."
-terraform plan
-```
+## Providers
 
+| Name | Version |
+|------|---------|
+| <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
+| <a name="provider_banyan"></a> [banyan](#provider\_banyan) | >=0.9.2 |
+
+## Modules
+
+No modules.
+
+## Resources
+
+| Name | Type |
+|------|------|
+| [aws_security_group.sg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_ami.ubuntu](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
 
 ## Inputs
 
@@ -75,15 +76,5 @@ terraform plan
 |------|-------------|
 | connector\_name | Name of the connector (example: `my-conn`) |
 | sg | The ID of the security group attached to the connector instance, which can be added as an inbound rule on other backend groups (example: `sg-1234abcd`) |
+<!-- END_TF_DOCS -->
 
-
-## Authors
-
-Module created and managed by [Banyan](https://github.com/banyansecurity).
-
-
-## License
-
-Licensed under Apache 2. See [LICENSE](LICENSE) for details.
-
-[banyan-security]: https://banyansecurity.io
