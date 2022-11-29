@@ -19,6 +19,7 @@ module "aws_connector" {
   name                   = "my-banyan-connector"
   vpc_id                 = "vpc-0e73afd7c24062f0a"
   subnet_id              = "subnet-00e393f22c3f09e16"
+  member_security_groups = [aws_security_group.allow_conn.id]
 }
 ```
 

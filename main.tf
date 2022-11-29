@@ -21,7 +21,7 @@ data "aws_ami" "ubuntu" {
 }
 
 resource "aws_security_group" "connector_sg" {
-  name        = "${var.name}-connector_sg"
+  name        = "${var.name}-connector-${random_string.random.result}"
   description = "Banyan connector runs in the private network, no internet-facing ports needed"
   vpc_id      = var.vpc_id
 
@@ -44,6 +44,12 @@ resource "aws_security_group" "connector_sg" {
     description       = "Banyan Global Edge network"
 
   }
+}
+
+resource "random_string" "random" {
+  length           = 3
+  special          = true
+  override_special = "-"
 }
 
 locals {
@@ -75,7 +81,7 @@ resource "aws_instance" "connector_vm" {
 
   tags = local.tags
 
-  vpc_security_group_ids = [aws_security_group.connector_sg.id]
+  vpc_security_group_ids = concat([aws_security_group.connector_sg.id], var.member_security_groups)
   subnet_id = var.subnet_id
 
   monitoring      = true
