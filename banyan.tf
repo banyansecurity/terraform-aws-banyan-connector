@@ -1,8 +1,9 @@
 terraform {
   required_providers {
     banyan = {
+      #source  = "github.com/banyansecurity/banyan"
       source  = "banyansecurity/banyan"
-      version = ">=0.9.2"
+      version = ">= 1.0.0"
     }   
   }
 }
