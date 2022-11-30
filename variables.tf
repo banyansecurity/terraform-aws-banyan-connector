@@ -1,14 +1,40 @@
-variable "region" {
+// Common Banyan Variables followed by cloud specific variables
+variable "name" {
   type        = string
-  description = "Region in AWS in which to deploy the connector"
+  description = "Name to use when registering this Connector with the Command Center console"
 }
 
-variable "profile" {
+variable "banyan_host" {
   type        = string
-  description = "AWS profile with your credentials"
-  default     = "default"
+  description = "URL of the Banyan Command Center"
+  default     = "https://net.banyanops.com/"
 }
 
+variable "connector_version" {
+  type        = string
+  description = "Override to use a specific version of connector (e.g. `1.3.0`)"
+  default     = ""
+}
+
+variable "cluster" {
+  type        = string
+  description = "Name of an existing Shield cluster to register this Connector with. This value is set automatically if omitted from the configuration"
+  default     = null
+}
+
+variable "tunnel_private_domains" {
+  type = list(string)
+  description = "Any internal domains that can only be resolved on your internal network’s private DNS"
+  default     = null
+}
+
+variable "tunnel_cidrs" {
+  type = list(string)
+  description = "Backend CIDR Ranges that correspond to the IP addresses in your private network(s)"
+  default     = null
+}
+
+// AWS specific variables
 variable "vpc_id" {
   type        = string
   description = "ID of the VPC in which to create the connector"
@@ -31,12 +57,6 @@ variable "management_cidrs" {
   default     = ["0.0.0.0/0"]
 }
 
-variable "package_version" {
-  type        = string
-  description = "Override to use a specific version of connector (e.g. `1.3.0`)"
-  default     = ""
-}
-
 variable "instance_type" {
   type        = string
   description = "EC2 instance type to use when creating Connector instance"
@@ -47,28 +67,6 @@ variable "tags" {
   type        = map(any)
   description = "Add tags to each resource"
   default     = null
-}
-
-variable "name_prefix" {
-  type        = string
-  description = "String to be added in front of all AWS object names"
-  default     = "banyan"
-}
-
-variable "banyan_host" {
-  type        = string
-  description = "URL of the Banyan Command Center"
-  default     = "https://team.console.banyanops.com/"
-}
-
-variable "banyan_api_key" {
-  type        = string
-  description = "API Key or Refresh Token generated from the Banyan Command Center console"
-}
-
-variable "connector_name" {
-  type        = string
-  description = "Name to use when registering this Connector with the Command Center console"
 }
 
 variable "member_security_groups" {
