@@ -35,6 +35,13 @@ resource "aws_security_group" "connector_sg" {
     description = "Management"
   }
 
+  ingress {
+    from_port = 9094
+    to_port   = 9094
+    protocol  = "tcp"
+    self      = true
+  }
+
   egress {
     from_port        = 0
     to_port          = 0
@@ -91,15 +98,20 @@ resource "aws_launch_configuration" "connector_config" {
 resource "aws_autoscaling_group" "connector_asg" {
   count                = var.asg_enabled ? 1 : 0
   launch_configuration = aws_launch_configuration.connector_config[0].id
-  vpc_zone_identifier  = [var.asg_subnet_ids]
+  vpc_zone_identifier  = var.asg_subnet_ids
+  target_group_arns    = [aws_lb_target_group.connector_tg[0].arn]
   min_size             = 1
   max_size             = 1
   desired_capacity     = 1
+  name                 = local.tags.Name
 
-  tag {
-    key                 = "Name"
-    value               = "connector-instance-${var.name}"
-    propagate_at_launch = true
+  dynamic "tag" {
+    for_each = local.tags
+    content {
+      key                 = tag.key
+      value               = tag.value
+      propagate_at_launch = true
+    }
   }
 
   health_check_type         = "EC2"
@@ -111,9 +123,23 @@ resource "aws_autoscaling_group" "connector_asg" {
   }
 }
 
+## LB is necessary for health checks to occur on target group
+## Does not actually pass traffic
+resource "aws_lb" "connector_lb" {
+  count = var.asg_enabled ? 1 : 0
+
+  security_groups    = concat([aws_security_group.connector_sg.id], var.member_security_groups)
+  name               = local.tags.Name
+  internal           = true
+  load_balancer_type = "network"
+  subnets            = local.one_subnet_per_az
+
+  tags = local.tags
+}
+
 resource "aws_lb_target_group" "connector_tg" {
   count    = var.asg_enabled ? 1 : 0
-  name     = "connector-tg"
+  name     = local.tags.Name
   port     = 9443
   protocol = "TCP"
   vpc_id   = var.vpc_id
@@ -127,8 +153,20 @@ resource "aws_lb_target_group" "connector_tg" {
   }
 }
 
+resource "aws_lb_listener" "connector_listener" {
+  count             = var.asg_enabled ? 1 : 0
+  load_balancer_arn = aws_lb.connector_lb[0].arn
+  port              = 9443
+  protocol          = "TCP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.connector_tg[0].arn
+  }
+}
+
 resource "aws_instance" "connector_vm" {
-  var.asg_enabled ? 0 : 1
+  count         = var.asg_enabled ? 0 : 1
   ami           = data.aws_ami.ubuntu.id
   instance_type = var.instance_type
   key_name      = var.ssh_key_name

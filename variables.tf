@@ -42,6 +42,7 @@ variable "vpc_id" {
 
 variable "subnet_id" {
   type        = string
+  default     = ""
   description = "ID of the subnet where the connector instance should be created"
 }
 
