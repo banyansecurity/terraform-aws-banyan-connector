@@ -36,8 +36,8 @@ resource "aws_security_group" "connector_sg" {
   }
 
   ingress {
-    from_port = 9094
-    to_port   = 9094
+    from_port = 9443
+    to_port   = 9443
     protocol  = "tcp"
     self      = true
   }
@@ -147,7 +147,7 @@ resource "aws_lb_target_group" "connector_tg" {
   health_check {
     protocol            = "TCP"
     port                = "traffic-port"
-    healthy_threshold   = 3
+    healthy_threshold   = 2
     unhealthy_threshold = 3
     interval            = 30
   }
