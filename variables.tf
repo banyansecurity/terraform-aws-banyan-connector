@@ -23,13 +23,13 @@ variable "cluster" {
 }
 
 variable "tunnel_private_domains" {
-  type = list(string)
+  type        = list(string)
   description = "Any internal domains that can only be resolved on your internal network’s private DNS"
   default     = null
 }
 
 variable "tunnel_cidrs" {
-  type = list(string)
+  type        = list(string)
   description = "Backend CIDR Ranges that correspond to the IP addresses in your private network(s)"
   default     = null
 }
@@ -43,6 +43,12 @@ variable "vpc_id" {
 variable "subnet_id" {
   type        = string
   description = "ID of the subnet where the connector instance should be created"
+}
+
+variable "asg_subnet_ids" {
+  type        = list(string)
+  description = "List of subnet IDs for the autoscaling group. Required when asg_enabled == true"
+  default     = []
 }
 
 variable "ssh_key_name" {
@@ -70,7 +76,13 @@ variable "tags" {
 }
 
 variable "member_security_groups" {
-  type    = list(string)
+  type        = list(string)
   description = "Additional security groups which the access tier should be a member of"
-  default = []
+  default     = []
+}
+
+variable "asg_enabled" {
+  type        = bool
+  description = "Enable autoscaling group for the connector, enables self-healing"
+  default     = false
 }
