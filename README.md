@@ -23,6 +23,19 @@ module "aws_connector" {
 }
 ```
 
+For self-healing ASG deployment:
+```hcl
+module "aws_connector" {
+  source                 = "banyansecurity/banyan-connector/aws"
+  
+  name                   = "my-banyan-connector"
+  vpc_id                 = "vpc-0e73afd7c24062f0a"
+  asg_subnets            = ["subnet-00e393f22c3f09e16","subnet-01ef94f23c2e08f20"]
+  asg_enabled            = true
+  member_security_groups = [aws_security_group.allow_conn.id]
+}
+```
+
 
 ## Notes
 
